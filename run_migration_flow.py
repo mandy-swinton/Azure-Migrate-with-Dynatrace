@@ -28,15 +28,15 @@ currency = CURRENCY
 def run_azure_migrate():
     headers = '{"Content-Type":"application/json"}'
 
-    import_site_name = "dynatrace-import-site"
-    master_site_name = "dynatrace-master-site"
+    import_site_name = "dynatrace-import-site3"
+    master_site_name = "dynatrace-master-site2"
     solution_name = "assessment_solution_dt"
     file_path = "dyna_output.csv"
 
     login()
     
     create_migration_project(subscription_id, resource_group, migration_project_name, headers)
-    create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region, headers)
+    #create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region, headers)
     #######attach_solutions(subscription_id,resource_group,migration_project_name, solution_name, headers)
     create_import_site(subscription_id, resource_group, migration_project_name, azure_region, import_site_name, headers)
     update_migrate_project(subscription_id, resource_group, import_site_name, migration_project_name)
@@ -45,8 +45,8 @@ def run_azure_migrate():
     upload_dynatrace_data(file_path, upload_uri)
     get_upload_status(subscription_id, resource_group, import_site_name, job_id)
     get_imported_machines(subscription_id,resource_group, import_site_name)
-    #assessment_project_name = get_assessment_name(subscription_id,resource_group, migration_project_name, headers)
-    #     
+    assessment_project_name = get_assessment_name(subscription_id,resource_group, migration_project_name, headers)
+        
     create_business_case(business_case_name, azure_region, currency,subscription_id,resource_group, migration_project_name, headers)
     get_business_case(subscription_id,resource_group, migration_project_name, business_case_name)
     get_evaluated_machines(subscription_id,resource_group,migration_project_name,business_case_name)
@@ -94,14 +94,12 @@ def update_migrate_project(subscription_id, resource_group, import_site_name, mi
     update_migrate_project_body = '{"type":"Microsoft.Migrate/MigrateProjects/Solutions","apiVersion":"2020-06-01-preview","name":"'+migration_project_name+'/Servers-Discovery-ServerDiscovery_Import","properties":{"tool":"ServerDiscovery_Import","purpose":"Discovery","goal":"Servers","status":"Active","details":{"extendedDetails":{"importSiteId":'+import_site_id+'}}}}'
     update_migrate_project_url = f'rest --method PUT --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/MigrateProjects/{migration_project_name}/Solutions/Servers-Discovery-ServerDiscovery_Import?api-version=2020-06-01-preview --body {update_migrate_project_body}'
     response = az_cli(update_migrate_project_url)
-    print("UPDATE MIGRATE RESPONSE: ", response)
+    print("UPDATE MIGRATE PROJECT RESPONSE: ", response)
 
 def update_master_site(subscription_id,resource_group,master_site_name, import_site_name, azure_region, migration_project_name, headers):
     sites = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/microsoft.offazure/importsites/{import_site_name}"
     update_master_site_body ='{"type":"Microsoft.OffAzure/MasterSites","name":"'+master_site_name+'","location":"'+azure_region+'","tags":{"MigrateProject":"'+migration_project_name+'"},"kind":"Migrate","properties":{"sites":["'+sites+'"],"allowMultipleSites":true}}'
-    print(update_master_site_body)
     update_master_site_url = f'rest --method PUT --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.OffAzure/MasterSites/{master_site_name}?api-version=2020-07-07 --headers {headers} --body {update_master_site_body}'
-    update_master_site_url = f'rest --method GET --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.OffAzure/MasterSites/{master_site_name}?api-version=2020-07-07'
     response = az_cli(update_master_site_url)
     print("UPDATE MASTER SITE RESPONSE: ", response)
 
