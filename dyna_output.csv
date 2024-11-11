@@ -1,0 +1,7 @@
+*Server name,IP addresses,*Cores,*Memory (In MB),*OS name,OS architecture,CPU utilization percentage,Memory utilization percentage
+ArcBox-Win2K22,10.10.1.102,1,12884,Windows Server 2022 Standard 21H2 2009  ver. 10.0.20348,x64,4.810416666666667,23.59258355034722
+acbox-ubuntu-2404,10.10.1.105,1,4106,Ubuntu 24.04.1 LTS (Noble Numbat) (kernel 6.8.0-47-generic),x64,9.529692925347222,33.92947591145833
+arcbox-ubuntu-02,10.10.1.103,1,4102,Ubuntu 22.04.4 LTS (Jammy Jellyfish) (kernel 5.15.0-124-generic),x64,8.865288628472221,30.283387586805556
+ArcBox-SQL,10.10.1.100,1,12884,Windows Server 2019 Standard 1809  ver. 10.0.17763,x64,8.024765850144092,35.50120442708333
+arcbox-ubuntu-01,10.10.1.104,1,4102,Ubuntu 22.04.4 LTS (Jammy Jellyfish) (kernel 5.15.0-124-generic),x64,8.891905381944444,30.488194444444446
+ArcBox-Win2K19,10.10.1.101,1,12884,Windows Server 2019 Standard 1809  ver. 10.0.17763,x64,5.576421440972222,28.52910698784722
