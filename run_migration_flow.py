@@ -35,22 +35,21 @@ def run_azure_migrate():
 
     login()
     
-    #create_migration_project(subscription_id, resource_group, migration_project_name, headers)
-    #create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region, headers)
+    create_migration_project(subscription_id, resource_group, migration_project_name, headers)
+    create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region, headers)
     #######attach_solutions(subscription_id,resource_group,migration_project_name, solution_name, headers)
-    #create_import_site(subscription_id, resource_group, migration_project_name, azure_region, import_site_name, headers)
-    #update_migrate_project(subscription_id, resource_group, import_site_name, migration_project_name)
-    #update_master_site(subscription_id,resource_group,master_site_name, import_site_name, azure_region, migration_project_name, headers)
-    #upload_uri, job_id = get_sas_uri_for_import(subscription_id,resource_group,import_site_name)
-    #upload_dynatrace_data(file_path, upload_uri)
-    #get_upload_status(subscription_id, resource_group, import_site_name, job_id)
-    #get_imported_machines(subscription_id,resource_group, import_site_name)
-    assessment_project_name = get_assessment_name(subscription_id,resource_group, migration_project_name, headers)
-    #assessment_project_name = "test-proj-name-dt"
-    
-    #create_business_case(business_case_name, azure_region, currency,subscription_id,resource_group, migration_project_name, headers)
-    #get_business_case(subscription_id,resource_group, migration_project_name, business_case_name)
-    #get_evaluated_machines(subscription_id,resource_group,migration_project_name,business_case_name)
+    create_import_site(subscription_id, resource_group, migration_project_name, azure_region, import_site_name, headers)
+    update_migrate_project(subscription_id, resource_group, import_site_name, migration_project_name)
+    update_master_site(subscription_id,resource_group,master_site_name, import_site_name, azure_region, migration_project_name, headers)
+    upload_uri, job_id = get_sas_uri_for_import(subscription_id,resource_group,import_site_name)
+    upload_dynatrace_data(file_path, upload_uri)
+    get_upload_status(subscription_id, resource_group, import_site_name, job_id)
+    get_imported_machines(subscription_id,resource_group, import_site_name)
+    #assessment_project_name = get_assessment_name(subscription_id,resource_group, migration_project_name, headers)
+    #     
+    create_business_case(business_case_name, azure_region, currency,subscription_id,resource_group, migration_project_name, headers)
+    get_business_case(subscription_id,resource_group, migration_project_name, business_case_name)
+    get_evaluated_machines(subscription_id,resource_group,migration_project_name,business_case_name)
 
 
 def login():
