@@ -28,32 +28,32 @@ currency = CURRENCY
 def run_azure_migrate():
     headers = '{"Content-Type":"application/json"}'
 
-    import_site_name = "dynatrace-import-site4"
-    master_site_name = "dynatrace-master-site4"
+    import_site_name = "dynatrace-import-site5"
+    master_site_name = "dynatrace-master-site5"
     solution_name = "assessment_solution_dt"
-    import_collector_name = "import_collector_1"
+    import_collector_name = "import-collector-2"
     file_path = "dyna_output.csv"
+    assessment_project_name = "assessment-proj-dt-2"
 
     #login()
     
-    #create_migration_project(subscription_id, resource_group, migration_project_name, headers)
-    #create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region, headers)
-    #######attach_solutions(subscription_id,resource_group,migration_project_name, solution_name, headers)
-    #create_import_site(subscription_id, resource_group, migration_project_name, azure_region, import_site_name, headers)
-    #update_migrate_project(subscription_id, resource_group, import_site_name, migration_project_name)
-    #update_master_site(subscription_id,resource_group,master_site_name, import_site_name, azure_region, migration_project_name, headers)
+    create_migration_project(subscription_id, resource_group, migration_project_name, headers)
+    create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region,assessment_project_name, headers)
+    ######attach_solutions(subscription_id,resource_group,migration_project_name, solution_name, headers)
+    create_import_site(subscription_id, resource_group, migration_project_name, azure_region, import_site_name, headers)
+    update_migrate_project(subscription_id, resource_group, import_site_name, migration_project_name)
+    update_master_site(subscription_id,resource_group,master_site_name, import_site_name, azure_region, migration_project_name, headers)
     upload_uri, job_id = get_sas_uri_for_import(subscription_id,resource_group,import_site_name)
     upload_dynatrace_data(file_path, upload_uri)
     get_upload_status(subscription_id, resource_group, import_site_name, job_id)
     get_imported_machines(subscription_id,resource_group, import_site_name)
-    #assessment_project_name = get_assessment_name(subscription_id,resource_group, migration_project_name, headers)
-    #assessment_project_name = "test-dt-5"
-    #put_import_collector(subscription_id, resource_group, assessment_project_name,import_collector_name, import_site_name, headers)
+    ###assessment_project_name = get_assessment_name(subscription_id,resource_group, migration_project_name, headers)
+    put_import_collector(subscription_id, resource_group, assessment_project_name,import_collector_name, import_site_name, headers)
   
         
-    create_business_case(business_case_name, azure_region, currency,subscription_id,resource_group, migration_project_name, headers)
-    get_business_case(subscription_id,resource_group, migration_project_name, business_case_name)
-    get_evaluated_machines(subscription_id,resource_group,migration_project_name,business_case_name)
+    create_business_case(business_case_name, azure_region, currency,subscription_id,resource_group, assessment_project_name, headers)
+    get_business_case(subscription_id,resource_group, assessment_project_name, business_case_name)
+    get_evaluated_machines(subscription_id,resource_group,assessment_project_name,business_case_name)
 
 
 def login():
@@ -65,15 +65,16 @@ def create_migration_project(subscription_id, resource_group, migration_project_
     body_json ='{"properties":{},"location":"westus2","tags":{}}'
    
     create_migrate_project_url = f'rest --method PUT --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/migrateProjects/{migration_project_name}?api-version=2018-09-01-preview --headers {headers} --body {body_json}'
-
+    #create_migrate_project_url = f'rest --method GET --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/migrateProjects/{migration_project_name}?api-version=2018-09-01-preview'
     response = az_cli(create_migrate_project_url)
     print("CREATE MIGRATION RESPONSE: ", response)
 
-def create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region, headers):
+def create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region, assessment_project_name, headers):
     print("CREATE ASSESSMENT PROJECT")
     assessment_solution_id = f'/subscriptions/{subscription_id}/resourcegroups/{resource_group}/providers/microsoft.migrate/migrateprojects/{migration_project_name}/Solutions/Servers-Assessment-ServerAssessment'
-    create_assessment_body = '{"properties":{"assessmentSolutionId":"'+assessment_solution_id+'","projectStatus":"Active","customerWorkspaceId":null,"customerWorkspaceLocation":null},"eTag":"","location":"'+azure_region+'","tags":{}}'
-    create_assessment_url = f'rest --method PUT --url https://management.azure.com/subscriptions/{subscription_id}/resourcegroups/{resource_group}/providers/Microsoft.Migrate/assessmentProjects/{migration_project_name}?api-version=2019-10-01 --headers {headers} --body {create_assessment_body}'
+    assessment_project_id = f'/subscriptions/{subscription_id}/resourcegroups/{resource_group}/providers/Microsoft.Migrate/assessmentprojects/{assessment_project_name}'
+    create_assessment_body = '{"type":"Microsoft.Migrate/assessmentprojects","name":"'+assessment_project_name+'","kind":"Migrate","properties":{"assessmentSolutionId":"'+assessment_solution_id+'","projectStatus":"Active","customerWorkspaceId":null,"customerWorkspaceLocation":null},"eTag":"","location":"'+azure_region+'","tags":{},"id":"'+assessment_project_id+'"}'
+    create_assessment_url = f'rest --method PUT --url https://management.azure.com/subscriptions/{subscription_id}/resourcegroups/{resource_group}/providers/Microsoft.Migrate/assessmentProjects/{assessment_project_name}?api-version=2019-10-01 --headers {headers} --body {create_assessment_body}'
     print(az_cli(create_assessment_url))
 
 def attach_solutions(subscription_id,resource_group,migration_project_name, solution_name, headers):
@@ -176,22 +177,22 @@ def get_assessment_name(subscription_id,resource_group, migration_project_name, 
     return assessment_project_name
     
 
-def create_business_case(business_case_name, azure_region, currency,subscription_id,resource_group, migration_project_name, headers):
+def create_business_case(business_case_name, azure_region, currency,subscription_id,resource_group, assessment_project_name, headers):
     print("CREATE BUSINESS CASE")
    
     business_case_body = '{"properties":{"settings":{"azureSettings":{"targetLocation":"'+azure_region+'","currency":"'+currency+'","businessCaseType":"IaaSOnly","workloadDiscoverySource":"Import"}}}}' #,id": "/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/AssessmentProjects/{assessment_project_name}/BusinessCases/{business_case_name},"name": "{business_case_name}", "type": "Microsoft.Migrate/assessmentprojects/businesscases","systemData": null CLOSE'
 
-    create_business_case_url = f'rest --method PUT --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/AssessmentProjects/{migration_project_name}/BusinessCases/{business_case_name}?api-version=2023-09-09-preview  --headers {headers} --body {business_case_body}'
+    create_business_case_url = f'rest --method PUT --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/AssessmentProjects/{assessment_project_name}/BusinessCases/{business_case_name}?api-version=2023-09-09-preview  --headers {headers} --body {business_case_body}'
     print(az_cli(create_business_case_url))
 
-def get_business_case(subscription_id,resource_group, migration_project_name, business_case_name):
+def get_business_case(subscription_id,resource_group, assessment_project_name, business_case_name):
     print("GET BUSINESS CASE")
-    get_business_case_url = f'rest --method GET --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/AssessmentProjects/{migration_project_name}/BusinessCases/{business_case_name}?api-version=2023-09-09-preview'
+    get_business_case_url = f'rest --method GET --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/AssessmentProjects/{assessment_project_name}/BusinessCases/{business_case_name}?api-version=2023-09-09-preview'
     print(az_cli(get_business_case_url))
 
-def get_evaluated_machines(subscription_id,resource_group,migration_project_name,business_case_name):
+def get_evaluated_machines(subscription_id,resource_group,assessment_project_name,business_case_name):
     print("GET EVALUATED MACHINES")
-    get_evaluated_machines_url = f'rest --method GET --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/AssessmentProjects/{migration_project_name}/BusinessCases/{business_case_name}/evaluatedMachines?api-version=2023-09-09-preview&pageSize=20'
+    get_evaluated_machines_url = f'rest --method GET --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/AssessmentProjects/{assessment_project_name}/BusinessCases/{business_case_name}/evaluatedMachines?api-version=2023-09-09-preview&pageSize=20'
     print(az_cli(get_evaluated_machines_url))
 
 run_azure_migrate()
