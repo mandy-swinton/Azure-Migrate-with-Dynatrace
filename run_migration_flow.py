@@ -4,11 +4,12 @@ import json
 import subprocess
 import os
 import time
-from inputs import SUBSCRIPTION_ID, RESOURCE_GROUP, MIGRATION_PROJECT_NAME, AZ_TENANT_ID, BUSINESS_CASE_NAME, AZURE_REGION, CURRENCY
+from inputs import SUBSCRIPTION_ID, RESOURCE_GROUP, MIGRATION_PROJECT_NAME, AZ_TENANT_ID, BUSINESS_CASE_NAME, AZURE_REGION, CURRENCY, TEST_SUFFIX
 
 
 def az_cli (args_str):
     args = args_str.split()
+    print(args)
     cli = get_default_cli()
     cli.invoke(args)
     if cli.result.result:
@@ -20,25 +21,26 @@ def az_cli (args_str):
 
 subscription_id = SUBSCRIPTION_ID
 resource_group = RESOURCE_GROUP
-migration_project_name = MIGRATION_PROJECT_NAME
+migration_project_name = "test-dt-" + TEST_SUFFIX #MIGRATION_PROJECT_NAME
 azure_region = AZURE_REGION
-business_case_name = BUSINESS_CASE_NAME
+business_case_name = "dynatrace-bcn-13" + TEST_SUFFIX #BUSINESS_CASE_NAME
 currency = CURRENCY
 
 def run_azure_migrate():
     headers = '{"Content-Type":"application/json"}'
 
-    import_site_name = "dynatrace-import-site11"
-    master_site_name = "dynatrace-master-site11"
-    import_collector_name = "import-collector-11"
+    import_site_name = "dynatrace-import-site"+ TEST_SUFFIX
+    master_site_name = "dynatrace-master-site" + TEST_SUFFIX
+    import_collector_name = "import-collector-" + TEST_SUFFIX
     file_path = "dyna_output.csv"
-    assessment_project_name = "assessment-proj-dt-11"
+    assessment_project_name = "assessment-proj-dt-" + TEST_SUFFIX
 
     login()
     
     create_migration_project(subscription_id, resource_group, migration_project_name, headers)
     create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region,assessment_project_name, headers)
     create_import_site(subscription_id, resource_group, migration_project_name, azure_region, import_site_name, headers)
+    time.sleep(10)
     attach_solutions(subscription_id,resource_group,migration_project_name, assessment_project_name, headers, import_collector_name, master_site_name)
 
     update_migrate_project(subscription_id, resource_group, import_site_name, migration_project_name)
@@ -47,7 +49,6 @@ def run_azure_migrate():
     upload_dynatrace_data(file_path, upload_uri)
     get_upload_status(subscription_id, resource_group, import_site_name, job_id)
     get_imported_machines(subscription_id,resource_group, import_site_name)
-    ###assessment_project_name = get_assessment_name(subscription_id,resource_group, migration_project_name, headers)
     put_import_collector(subscription_id, resource_group, assessment_project_name,import_collector_name, import_site_name, headers)
   
         
@@ -66,7 +67,7 @@ def create_migration_project(subscription_id, resource_group, migration_project_
     print("CREATING MIGRATION PROJECT")
     body_json ='{"properties":{},"location":"westus2","tags":{}}'
    
-    create_migrate_project_url = f'rest --method PUT --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/migrateProjects/{migration_project_name}?api-version=2018-09-01-preview --headers {headers} --body {body_json}'
+    create_migrate_project_url = f"rest --method PUT --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/migrateProjects/{migration_project_name}?api-version=2018-09-01-preview --headers {headers} --body {body_json}"
     #create_migrate_project_url = f'rest --method GET --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/migrateProjects/{migration_project_name}?api-version=2018-09-01-preview'
     response = az_cli(create_migrate_project_url)
     print("CREATE MIGRATION RESPONSE: ", response)
@@ -151,7 +152,7 @@ def get_sas_uri_for_import(subscription_id,resource_group,import_site_name):
 def upload_dynatrace_data(file_path, upload_uri):
     print("UPLOAD DYNATRACE DATA")
     #TODOL UNCOMMENT TO RUN DYNATRACE CODE
-    #upload_body = gather_dyantrace_data().replace(" ","%20").replace("\n","%0A")
+    upload_body = gather_dyantrace_data().replace(" ","%20").replace("\n","%0A")
     upload_url = f"az storage blob upload -f {file_path} --blob-url '{upload_uri}'"
     #run outside the venv because of the way credentials are stored
     process = subprocess.run(['bash', '--login', '-c',upload_url], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env={})
