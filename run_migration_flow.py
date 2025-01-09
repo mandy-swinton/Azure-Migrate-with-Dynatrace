@@ -4,7 +4,7 @@ import json
 import subprocess
 import os
 import time
-from inputs import SUBSCRIPTION_ID, RESOURCE_GROUP, MIGRATION_PROJECT_NAME, AZ_TENANT_ID, BUSINESS_CASE_NAME, AZURE_REGION, CURRENCY, TEST_SUFFIX
+from inputs import SUBSCRIPTION_ID, RESOURCE_GROUP, AZ_TENANT_ID, AZURE_REGION, CURRENCY, TEST_SUFFIX
 
 
 def az_cli (args_str):
@@ -21,9 +21,9 @@ def az_cli (args_str):
 
 subscription_id = SUBSCRIPTION_ID
 resource_group = RESOURCE_GROUP
-migration_project_name = "test-dt-" + TEST_SUFFIX #MIGRATION_PROJECT_NAME
+
 azure_region = AZURE_REGION
-business_case_name = "dynatrace-bcn-13" + TEST_SUFFIX #BUSINESS_CASE_NAME
+
 currency = CURRENCY
 
 def run_azure_migrate():
@@ -32,8 +32,10 @@ def run_azure_migrate():
     import_site_name = "dynatrace-import-site"+ TEST_SUFFIX
     master_site_name = "dynatrace-master-site" + TEST_SUFFIX
     import_collector_name = "import-collector-" + TEST_SUFFIX
-    file_path = "dyna_output.csv"
+    business_case_name = "dynatrace-bcn-13" + TEST_SUFFIX 
+    migration_project_name = "test-dt-" + TEST_SUFFIX 
     assessment_project_name = "assessment-proj-dt-" + TEST_SUFFIX
+    file_path = "dyna_output.csv"
 
     login()
     
@@ -148,17 +150,18 @@ def get_sas_uri_for_import(subscription_id,resource_group,import_site_name):
     print("CREATE SAAS URI FOR IMPORT RESPONSE: ", response)
     return upload_uri, job_id
 
+
 #TODO: add a check in the dynatrace data code to look for duplicate names
 def upload_dynatrace_data(file_path, upload_uri):
     print("UPLOAD DYNATRACE DATA")
     #TODOL UNCOMMENT TO RUN DYNATRACE CODE
-    upload_body = gather_dyantrace_data().replace(" ","%20").replace("\n","%0A")
-    upload_url = f"az storage blob upload -f {file_path} --blob-url '{upload_uri}'"
-    #run outside the venv because of the way credentials are stored
-    process = subprocess.run(['bash', '--login', '-c',upload_url], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env={})
+    upload_url = f"az storage blob upload -f {file_path} --blob-url {upload_uri}"
+    upload_arr = upload_url.split(" ")
+    process = subprocess.run(upload_arr, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print("UPLOAD BLOB REPONSE ",process)
     print("WAITNG 10 SECONDS FOR DATA TO PROCESS")
     time.sleep(10)
+
 
 def get_upload_status(subscription_id, resource_group, import_site_name, job_id):
     get_upload_status = f"rest --method GET --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.OffAzure/ImportSites/{import_site_name}/jobs/{job_id}?api-version=2019-05-01-preview"
