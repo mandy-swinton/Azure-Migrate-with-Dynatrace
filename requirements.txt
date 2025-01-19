@@ -1,0 +1,5 @@
+-i https://pypi.org/simple
+azure-cli
+azure-cli-core
+azure-cli-command-modules-nspkg
+urllib3
