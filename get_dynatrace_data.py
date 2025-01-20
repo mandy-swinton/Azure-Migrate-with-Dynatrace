@@ -1,8 +1,11 @@
 import json
 import urllib3
 from inputs import DT_APIKEY, DT_TENANT
+import random
 
 
+#TODO: NEXT PAGE KEY
+#TODO: change max to p90 value
 DT_GET_ALL_ENTITIES_URL = DT_TENANT + "/api/v2/entities?entitySelector=type%28%22HOST%22%29"
 DT_GET_EACH_ENTITY_URL = DT_TENANT + "/api/v2/entities/"
 DT_GET_METRICS_CPU_URL = DT_TENANT + "/api/v2/metrics/query?metricSelector=builtin:host.cpu.usage&from=-14d&to=now&resolution=1h"
@@ -98,14 +101,20 @@ def gather_dyantrace_data():
     return csv_string
     
 
+
 def format_dynatrace_data(entity_arr, memory_max_map, cpu_max_map):
+    server_names = {}
     csv = []
     master_ip_list = []
     csv.append(csv_headers)
     for entity in entity_arr:
         entity_id = entity['entityId']
         properties = entity['properties']
-        server_name = properties['detectedName']
+        if properties['detectedName'] in server_names.keys():
+            server_name = properties['detectedName'] + random.randint(1, 1000)
+        else:
+            server_name = properties['detectedName']
+
         #TODO: reformat for more than one value
         #TODO: whats up with 10.129.0.2
         ip_addresses = properties['ipAddress']

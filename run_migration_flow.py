@@ -4,7 +4,7 @@ import json
 import subprocess
 import os
 import time
-from inputs import SUBSCRIPTION_ID, RESOURCE_GROUP, AZ_TENANT_ID, AZURE_REGION, CURRENCY, TEST_SUFFIX
+from inputs import AZ_SUBSCRIPTION_ID, AZ_RESOURCE_GROUP, AZ_TENANT_ID, AZURE_REGION, CURRENCY, TEST_SUFFIX
 
 
 def az_cli (args_str):
@@ -19,8 +19,8 @@ def az_cli (args_str):
     return True
 
 
-subscription_id = SUBSCRIPTION_ID
-resource_group = RESOURCE_GROUP
+subscription_id = AZ_SUBSCRIPTION_ID
+resource_group = AZ_RESOURCE_GROUP
 
 azure_region = AZURE_REGION
 
@@ -32,7 +32,7 @@ def run_azure_migrate():
     import_site_name = "dynatrace-import-site"+ TEST_SUFFIX
     master_site_name = "dynatrace-master-site" + TEST_SUFFIX
     import_collector_name = "import-collector-" + TEST_SUFFIX
-    business_case_name = "dynatrace-bcn-13" + TEST_SUFFIX 
+    business_case_name = "dynatrace-bcn-" + TEST_SUFFIX 
     migration_project_name = "test-dt-" + TEST_SUFFIX 
     assessment_project_name = "assessment-proj-dt-" + TEST_SUFFIX
     file_path = "dyna_output.csv"
@@ -42,7 +42,8 @@ def run_azure_migrate():
     create_migration_project(subscription_id, resource_group, migration_project_name, headers)
     create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region,assessment_project_name, headers)
     create_import_site(subscription_id, resource_group, migration_project_name, azure_region, import_site_name, headers)
-    time.sleep(10)
+    print("Wait 15 seconds for resources to provision")
+    time.sleep(15)
     attach_solutions(subscription_id,resource_group,migration_project_name, assessment_project_name, headers, import_collector_name, master_site_name)
 
     update_migrate_project(subscription_id, resource_group, import_site_name, migration_project_name)
@@ -153,6 +154,7 @@ def get_sas_uri_for_import(subscription_id,resource_group,import_site_name):
 
 #TODO: add a check in the dynatrace data code to look for duplicate names
 def upload_dynatrace_data(file_path, upload_uri):
+    gather_dyantrace_data()
     print("UPLOAD DYNATRACE DATA")
     #TODOL UNCOMMENT TO RUN DYNATRACE CODE
     upload_url = f"az storage blob upload -f {file_path} --blob-url {upload_uri}"
