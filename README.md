@@ -23,15 +23,22 @@ Update information in the inputs.py
 
 Install Pip: 
     sudo apt-get update
+
     sudo apt install python3-pip
 
+
 sudo apt install python3-venv
+
 python3 -m venv .venv
+
 . .venv/bin/activate
+
 
 pip install -r requirements.txt
 
+
 python3 run_migrate_flow.py
+
 
 
 Need Help?
