@@ -16,12 +16,17 @@ It is recommended that you run it on one to avoid environment based conflicts.
 
 Instructions:
 ssh into your VM
-git clone https://github.com/mandy-swinton/Azure-Migrate-with-Dynatrace.git
+
+git clone https://github.com/mandy-swinton/Azure-Migrate-with-Dynatrace.git 
+
 cd Azure-Migrate-with-Dynatrace
+
 Update information in the inputs.py
+
     TEST_SUFFIX is just to update if you run it mulitple times, so you don't create Azure objects with the same name
 
 Install Pip: 
+
     sudo apt-get update
 
     sudo apt install python3-pip
