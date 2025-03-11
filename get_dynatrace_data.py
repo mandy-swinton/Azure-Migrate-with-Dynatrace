@@ -2,10 +2,10 @@ import json
 import urllib3
 from inputs import DT_APIKEY, DT_TENANT
 import random
+from statistics import quantiles
 
 
 #TODO: NEXT PAGE KEY
-#TODO: change max to p90 value
 DT_GET_ALL_ENTITIES_URL = DT_TENANT + "/api/v2/entities?entitySelector=type%28%22HOST%22%29"
 DT_GET_EACH_ENTITY_URL = DT_TENANT + "/api/v2/entities/"
 DT_GET_METRICS_CPU_URL = DT_TENANT + "/api/v2/metrics/query?metricSelector=builtin:host.cpu.usage&from=-14d&to=now&resolution=1h"
@@ -44,36 +44,38 @@ def get_metrics_memory():
 def get_metrics_cpu():
     return make_http_request("GET",DT_GET_METRICS_CPU_URL, headers)
 
-def get_max_memory_by_host_id(memory_arr):
-    max_memory_map = {}
+
+def get_p90_memory_by_host_id(memory_arr):
+    p90_memory_map = {}
     #TODO: make sure result isn't empty
     data = memory_arr["result"][0]["data"]
     for host_data in data:
-        max_memory = 0
         host_name = host_data["dimensions"][0]
         values = host_data["values"]
-        for value in values:
-            if value is not None:
-                if value > max_memory:
-                    max_memory= value
-        max_memory_map[host_name] = max_memory
-    return max_memory_map
+        values = [x for x in values if x is not None]
+        p90 = 0
+        if len(values) < 2:
+            p90 = values[0]
+        else:
+            p90 = quantiles(values, n=100)[89]
+            p90_memory_map[host_name] = round(p90,2)
+    return p90_memory_map
 
-def get_max_cpu_by_host_id(cpu_arr):
-    max_cpu_map = {}
+def get_p90_cpu_by_host_id(cpu_arr):
+    p90_cpu_map = {}
     #TODO: make sure result isn't empty
     data = cpu_arr["result"][0]["data"]
     for host_data in data:
-        max_cpu = 0
         host_name = host_data["dimensions"][0]
         values = host_data["values"]
-        for value in values:
-            if value is not None:
-                if value > max_cpu:
-                    max_cpu = value
-        max_cpu_map[host_name] = max_cpu
-    return max_cpu_map
-
+        values = [x for x in values if x is not None]
+        p90 = 0
+        if len(values) < 2:
+            p90 = values[0]
+        else:
+            p90 = quantiles(values, n=100)[89]
+            p90_cpu_map[host_name] = round(p90,2)
+    return p90_cpu_map
 
 
 #TODO: handle next page key on all requests
@@ -91,18 +93,18 @@ def gather_dyantrace_data():
     
     
     memory_metrics = get_metrics_memory()
-    memory_max_map = get_max_memory_by_host_id(memory_metrics)
+    memory_p90_map = get_p90_memory_by_host_id(memory_metrics)
     cpu_metrics = get_metrics_cpu()
-    cpu_max_map = get_max_cpu_by_host_id(cpu_metrics)
+    cpu_p90_map = get_p90_cpu_by_host_id(cpu_metrics)
 
-    csv = format_dynatrace_data(entity_arr, memory_max_map, cpu_max_map)
+    csv = format_dynatrace_data(entity_arr, memory_p90_map, cpu_p90_map)
     csv_string = format_csv_to_string(csv)
     format_csv_to_string_encode(csv)
     return csv_string
     
 
 
-def format_dynatrace_data(entity_arr, memory_max_map, cpu_max_map):
+def format_dynatrace_data(entity_arr, memory_p90_map, cpu_p90_map):
     server_names = {}
     csv = []
     master_ip_list = []
@@ -110,7 +112,9 @@ def format_dynatrace_data(entity_arr, memory_max_map, cpu_max_map):
     for entity in entity_arr:
         entity_id = entity['entityId']
         properties = entity['properties']
-        if properties['detectedName'] in server_names.keys():
+        if 'detectedName' not in properties:
+            server_name = random.randint(1, 10000)
+        elif properties['detectedName'] in server_names.keys():
             server_name = properties['detectedName'] + random.randint(1, 1000)
         else:
             server_name = properties['detectedName']
@@ -133,17 +137,22 @@ def format_dynatrace_data(entity_arr, memory_max_map, cpu_max_map):
         if 'memoryTotal' in properties:
             memory = round(properties['memoryTotal']/1000000)
         #TODO:reformat
-        os_name = properties['osVersion']
-        os_name_format = os_name.replace(",", " ")
-        os_architecture = "x" + properties['bitness']
-        max_cpu = 0
-        if entity_id in cpu_max_map.keys():
-            max_cpu = cpu_max_map[entity_id]
-        max_memory = 0
-        if entity_id in memory_max_map.keys():
-            max_memory = memory_max_map[entity['entityId']]
+        os_name = "N/A"
+        if 'osVersion' in properties:
+            os_name = properties['osVersion']
+            os_name = os_name.replace(",", " ")
 
-        row = [server_name,ip_addresses_format,cores,memory,os_name_format,os_architecture,max_cpu,max_memory]
+        os_architecture = "N/A"
+        if 'bitness' in properties:
+            os_architecture = "x" + properties['bitness']
+        max_cpu = 0
+        if entity_id in cpu_p90_map.keys():
+            max_cpu = cpu_p90_map[entity_id]
+        max_memory = 0
+        if entity_id in memory_p90_map.keys():
+            max_memory = memory_p90_map[entity['entityId']]
+
+        row = [server_name,ip_addresses_format,cores,memory,os_name,os_architecture,max_cpu,max_memory]
         csv.append(row)
     #print(csv)
     return csv

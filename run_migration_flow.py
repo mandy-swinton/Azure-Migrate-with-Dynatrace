@@ -43,7 +43,7 @@ def run_azure_migrate():
     create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region,assessment_project_name, headers)
     create_import_site(subscription_id, resource_group, migration_project_name, azure_region, import_site_name, headers)
     print("Wait 15 seconds for resources to provision")
-    time.sleep(15)
+    time.sleep(20)
     attach_solutions(subscription_id,resource_group,migration_project_name, assessment_project_name, headers, import_collector_name, master_site_name)
 
     update_migrate_project(subscription_id, resource_group, import_site_name, migration_project_name)
@@ -56,9 +56,6 @@ def run_azure_migrate():
   
         
     create_business_case(business_case_name, azure_region, currency,subscription_id,resource_group, assessment_project_name, headers)
-    get_business_case(subscription_id,resource_group, assessment_project_name, business_case_name)
-    get_evaluated_machines(subscription_id,resource_group,assessment_project_name,business_case_name)
-    get_overview_summary(subscription_id,resource_group,assessment_project_name,business_case_name)
     create_portal_url(business_case_name,assessment_project_name,subscription_id,resource_group,migration_project_name)
 
 
@@ -134,8 +131,8 @@ def update_master_site(subscription_id,resource_group,master_site_name, import_s
 
     #"provisioningState":"Creating", Succeeded
     while response["properties"]["provisioningState"] != "Succeeded":
-        print("Hang tight, will recheck in 10 seconds")
-        time.sleep(10)
+        print("Hang tight, will recheck in 15  seconds")
+        time.sleep(15)
         response = az_cli(get_master_site_url)
 
 
@@ -221,7 +218,13 @@ def create_business_case(business_case_name, azure_region, currency,subscription
     create_business_case_url = f'rest --method PUT --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/AssessmentProjects/{assessment_project_name}/BusinessCases/{business_case_name}?api-version=2023-09-09-preview  --headers {headers} --body {business_case_body}'
     print(az_cli(create_business_case_url))
 
-def get_business_case(subscription_id,resource_group, assessment_project_name, business_case_name):
+def create_portal_url(business_case_name,assessment_project_name,subscription_id,resource_group,migration_project_name):
+    print("GO TO THE FOLLOWING URL TO VIEW YOUR BUSINESS CASE")
+    portal_url = f'https://portal.azure.com/#view/Microsoft_Azure_OneMigrate/BusinessCaseMenuBlade/~/overview/name/{business_case_name}/projectName/{assessment_project_name}/subscriptionId/{subscription_id}/resourceGroup/{resource_group}/businessCaseType/IaaSOnly/migrateProjectId/%2Fsubscriptions%2F{subscription_id}%2FresourceGroups%2F{resource_group}%2Fproviders%2FMicrosoft.Migrate%2FmigrateProjects%2F{migration_project_name}/azureArcIncluded~/true'
+    print("Your Business Case Will take 5-10 minutes to create. Check back at this URL in 10 minutes to check the progress of your Business Case and view your Migration Analysis")
+    print (portal_url)
+
+'''def get_business_case(subscription_id,resource_group, assessment_project_name, business_case_name):
     print("GET BUSINESS CASE")
     get_business_case_url = f'rest --method GET --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/AssessmentProjects/{assessment_project_name}/BusinessCases/{business_case_name}?api-version=2023-09-09-preview'
     response = az_cli(get_business_case_url)
@@ -238,15 +241,11 @@ def get_evaluated_machines(subscription_id,resource_group,assessment_project_nam
     get_evaluated_machines_url = f'rest --method GET --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/AssessmentProjects/{assessment_project_name}/BusinessCases/{business_case_name}/evaluatedMachines?api-version=2023-09-09-preview&pageSize=20'
     print(az_cli(get_evaluated_machines_url))
 
-#TODO implement endpoint
 def get_overview_summary(subscription_id,resource_group,assessment_project_name,business_case_name):
     print("GET OVERVIEW SUMMARY")
     get_overview_summary_url = f'rest --method GET --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/AssessmentProjects/{assessment_project_name}/BusinessCases/{business_case_name}/overviewsummaries/default?api-version=2023-09-09-preview'
     az_cli(get_overview_summary_url)
+    '''
 
-def create_portal_url(business_case_name,assessment_project_name,subscription_id,resource_group,migration_project_name):
-    print("GO TO THE FOLLOWING URL TO VIEW YOUR BUSINESS CASE")
-    portal_url = f'https://portal.azure.com/#view/Microsoft_Azure_OneMigrate/BusinessCaseMenuBlade/~/overview/name/{business_case_name}/projectName/{assessment_project_name}/subscriptionId/{subscription_id}/resourceGroup/{resource_group}/businessCaseType/IaaSOnly/migrateProjectId/%2Fsubscriptions%2F{subscription_id}%2FresourceGroups%2F{resource_group}%2Fproviders%2FMicrosoft.Migrate%2FmigrateProjects%2F{migration_project_name}/azureArcIncluded~/true'
-    print (portal_url)
 
 run_azure_migrate()
