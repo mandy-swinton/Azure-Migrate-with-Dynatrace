@@ -12,7 +12,7 @@ DT_GET_METRICS_CPU_URL = DT_TENANT + "/api/v2/metrics/query?metricSelector=built
 DT_GET_METRICS_MEMORY_URL = DT_TENANT + "/api/v2/metrics/query?metricSelector=builtin:host.mem.usage&from=-14d&to=now&resolution=1h"
 
 api_key = f"Api-Token {DT_APIKEY}" 
-headers =  headers = {"Authorization": api_key, "Accept": "application/json"}
+headers =  headers = {"Authorization": api_key, "Accept": "application/json", "User-Agent":"dynatrace-microsoft-migrate"}
 csv_headers = ["*Server name", "IP addresses","*Cores", "*Memory (In MB)", "*OS name", "OS architecture","CPU utilization percentage","Memory utilization percentage"]
 
 #helper function: make request

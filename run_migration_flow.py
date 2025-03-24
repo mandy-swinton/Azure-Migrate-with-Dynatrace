@@ -4,7 +4,7 @@ import json
 import subprocess
 import os
 import time
-from inputs import AZ_SUBSCRIPTION_ID, AZ_RESOURCE_GROUP, AZ_TENANT_ID, AZURE_REGION, CURRENCY, TEST_SUFFIX
+from inputs import AZ_SUBSCRIPTION_ID, AZ_RESOURCE_GROUP, AZ_TENANT_ID, AZURE_REGION, CURRENCY, TEST_SUFFIX, MSFT_USER_AGENT
 
 
 def az_cli (args_str):
@@ -37,13 +37,15 @@ def run_azure_migrate():
     assessment_project_name = "assessment-proj-dt-" + TEST_SUFFIX
     file_path = "dyna_output.csv"
 
+    os.environ['AZURE_HTTP_USER_AGENT'] = f"{MSFT_USER_AGENT}"
+
     login()
     
     create_migration_project(subscription_id, resource_group, migration_project_name, headers)
     create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region,assessment_project_name, headers)
     create_import_site(subscription_id, resource_group, migration_project_name, azure_region, import_site_name, headers)
-    print("Wait 15 seconds for resources to provision")
-    time.sleep(20)
+    print("Wait 25 seconds for resources to provision")
+    time.sleep(25)
     attach_solutions(subscription_id,resource_group,migration_project_name, assessment_project_name, headers, import_collector_name, master_site_name)
 
     update_migrate_project(subscription_id, resource_group, import_site_name, migration_project_name)
