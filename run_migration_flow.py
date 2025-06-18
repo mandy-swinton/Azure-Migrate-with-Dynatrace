@@ -41,15 +41,18 @@ def run_azure_migrate():
 
     login()
     
+    
     create_migration_project(subscription_id, resource_group, migration_project_name, headers)
     create_assessment_project(subscription_id,resource_group,migration_project_name, azure_region,assessment_project_name, headers)
     create_import_site(subscription_id, resource_group, migration_project_name, azure_region, import_site_name, headers)
-    print("Wait 25 seconds for resources to provision")
-    time.sleep(25)
+    print("Wait 60 seconds for resources to provision")
+    time.sleep(60)
     attach_solutions(subscription_id,resource_group,migration_project_name, assessment_project_name, headers, import_collector_name, master_site_name)
-
+    register_tool(subscription_id, resource_group, migration_project_name, headers)
+    
     update_migrate_project(subscription_id, resource_group, import_site_name, migration_project_name)
     update_master_site(subscription_id,resource_group,master_site_name, import_site_name, azure_region, migration_project_name, headers)
+    
     upload_uri, job_id = get_sas_uri_for_import(subscription_id,resource_group,import_site_name)
     upload_dynatrace_data(file_path, upload_uri)
     get_upload_status(subscription_id, resource_group, import_site_name, job_id)
@@ -101,6 +104,14 @@ def attach_solutions(subscription_id,resource_group,migration_project_name, asse
     discovery_solution_url_2 = f'rest --method PUT --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/migrateProjects/{migration_project_name}/solutions/Servers-Discovery-ServerDiscovery?api-version=2018-09-01-preview --headers {headers} --body {discovery_solution_body_2}'
     print(az_cli(discovery_solution_url_2))
 
+def register_tool(subscription_id, resource_group, migration_project_name, headers):
+    body_one = '{"tool":"ServerAssessment"}'
+    body_two = '{"tool":"ServerDiscovery"}'
+    register_tool_url = f'rest --method POST --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/migrateProjects/{migration_project_name}/registerTool?api-version=2020-06-01-preview --headers {headers} --body {body_one}'
+    print(az_cli(register_tool_url))
+    register_tool_url = f'rest --method POST --url https://management.azure.com/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Migrate/migrateProjects/{migration_project_name}/registerTool?api-version=2020-06-01-preview --headers {headers} --body {body_two}'
+    print(az_cli(register_tool_url))
+    #call twice with both bodies. POST 
     
 
 def create_import_site(subscription_id, resource_group, migration_project_name, azure_region, import_site_name, headers):
@@ -133,8 +144,8 @@ def update_master_site(subscription_id,resource_group,master_site_name, import_s
 
     #"provisioningState":"Creating", Succeeded
     while response["properties"]["provisioningState"] != "Succeeded":
-        print("Hang tight, will recheck in 15  seconds")
-        time.sleep(15)
+        print("Hang tight, will recheck in 20  seconds")
+        time.sleep(25)
         response = az_cli(get_master_site_url)
 
 
@@ -153,9 +164,8 @@ def get_sas_uri_for_import(subscription_id,resource_group,import_site_name):
 
 #TODO: add a check in the dynatrace data code to look for duplicate names
 def upload_dynatrace_data(file_path, upload_uri):
-    gather_dyantrace_data()
+    #gather_dyantrace_data()
     print("UPLOAD DYNATRACE DATA")
-    #TODOL UNCOMMENT TO RUN DYNATRACE CODE
     upload_url = f"az storage blob upload -f {file_path} --blob-url {upload_uri}"
     upload_arr = upload_url.split(" ")
     process = subprocess.run(upload_arr, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
